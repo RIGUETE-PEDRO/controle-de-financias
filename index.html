@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Financeiro</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        h1,
+        h2 {
+            text-align: center;
+            color: #bb86fc;
+        }
+
+        #saldo {
+            text-align: center;
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        #saldo.positivo {
+            color: #03dac6;
+        }
+
+        #saldo.negativo {
+            color: #cf6679;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #333;
+            border-radius: 4px;
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+            font-size: 16px;
+        }
+
+        .tipo-transacao {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .tipo-transacao input {
+            display: none;
+        }
+
+        .tipo-transacao label {
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid #333;
+        }
+
+        input[type="radio"]:checked+label {
+            font-weight: bold;
+        }
+
+        #tipo-entrada:checked+label {
+            background-color: #03dac6;
+            color: #121212;
+            border-color: #03dac6;
+        }
+
+        #tipo-saida:checked+label {
+            background-color: #cf6679;
+            color: #121212;
+            border-color: #cf6679;
+        }
+
+        button[type="submit"] {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: #bb86fc;
+            color: #121212;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 16px;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #a76aee;
+        }
+
+        #lista-transacoes {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #lista-transacoes li {
+            background-color: #2c2c2c;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        #lista-transacoes li.entrada {
+            border-left: 4px solid #03dac6;
+        }
+
+        #lista-transacoes li.saida {
+            border-left: 4px solid #cf6679;
+        }
+
+        .valor {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .entrada .valor {
+            color: #03dac6;
+        }
+
+        .saida .valor {
+            color: #cf6679;
+        }
+
+        .remover-btn {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 1;
+            margin-left: 15px;
+        }
+
+        .remover-btn:hover {
+            color: #cf6679;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Controle Financeiro</h1>
+        <h2 id="saldo">R$ 0,00</h2>
+
+        <form id="form-transacao">
+            <div class="input-group">
+                <input type="text" id="descricao" placeholder="Descrição da transação" required>
+                <input type="number" id="valor" step="0.01" placeholder="Valor" required>
+            </div>
+            <div class="tipo-transacao">
+                <input type="radio" id="tipo-entrada" name="tipo" value="entrada" checked>
+                <label for="tipo-entrada">Entrada</label>
+                <input type="radio" id="tipo-saida" name="tipo" value="saida">
+                <label for="tipo-saida">Saída</label>
+            </div>
+            <button type="submit">Adicionar Transação</button>
+        </form>
+
+        <h2>Histórico</h2>
+        <ul id="lista-transacoes"></ul>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000/api/transacoes';
+        const formTransacao = document.getElementById('form-transacao');
+        const listaTransacoes = document.getElementById('lista-transacoes');
+        const saldoEl = document.getElementById('saldo');
+
+        async function carregarTransacoes() {
+            try {
+                const response = await fetch(API_URL);
+                const transacoes = await response.json();
+                listaTransacoes.innerHTML = '';
+                let saldo = 0;
+
+                transacoes.forEach(transacao => {
+                    const item = document.createElement('li');
+                    item.classList.add(transacao.tipo); // Adiciona classe 'entrada' ou 'saida'
+                    item.dataset.id = transacao.id; // Adiciona o ID ao elemento para remoção
+
+                    const valorAbsoluto = Math.abs(transacao.valor);
+                    const valorFormatado = valorAbsoluto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+                    if (transacao.tipo === 'entrada') {
+                        saldo += transacao.valor;
+                    } else {
+                        saldo -= transacao.valor;
+                    }
+
+                    item.innerHTML = `
+                        <span>${transacao.descricao}</span>
+                        <div>
+                            <span class="valor">${valorFormatado}</span>
+                            <button class="remover-btn">×</button>
+                        </div>
+                    `;
+                    listaTransacoes.appendChild(item);
+                });
+
+                // Atualiza o saldo total na tela
+                saldoEl.textContent = saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                saldoEl.className = saldo >= 0 ? 'positivo' : 'negativo';
+
+            } catch (error) {
+                console.error('Erro ao carregar transações:', error);
+                listaTransacoes.innerHTML = '<li>Falha ao carregar dados. Verifique se a API está rodando.</li>';
+            }
+        }
+
+        formTransacao.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const novaTransacao = {
+                descricao: document.getElementById('descricao').value,
+                valor: document.getElementById('valor').value,
+                tipo: document.querySelector('input[name="tipo"]:checked').value
+            };
+
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(novaTransacao)
+                });
+                formTransacao.reset(); // Limpa o formulário
+                carregarTransacoes();
+            } catch (error) {
+                console.error('Erro ao adicionar transação:', error);
+                alert('Não foi possível adicionar a transação.');
+            }
+        });
+
+        // Evento para remover uma transação (usando delegação de evento)
+        listaTransacoes.addEventListener('click', async function (event) {
+            if (event.target.classList.contains('remover-btn')) {
+                const itemLi = event.target.closest('li');
+                const transacaoId = itemLi.dataset.id;
+
+                if (confirm('Tem certeza que deseja remover esta transação?')) {
+                    try {
+                        await fetch(`${API_URL}/${transacaoId}`, { method: 'DELETE' });
+                        carregarTransacoes(); // Recarrega a lista para refletir a remoção
+                    } catch (error) {
+                        console.error('Erro ao remover transação:', error);
+                        alert('Não foi possível remover a transação.');
+                    }
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', carregarTransacoes);
+    </script>
+</body>
+
+</html>
