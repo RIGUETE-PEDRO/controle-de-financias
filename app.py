@@ -57,8 +57,13 @@ def api_criar_meta():
 def api_remover_meta(meta_id):
     remover_meta(meta_id)
     return jsonify({"sucesso": "Meta removida!"}), 200
+# app.py
+# Adicione estas importações no início do arquivo, junto com as outras
+from openpyxl.styles import Font, PatternFill
 
-# --- ROTA DE RELATÓRIO ---
+# ... (resto do arquivo) ...
+
+# --- ROTA DE RELATÓRIO ATUALIZADA COM CORES ---
 @app.route('/api/relatorio', methods=['GET'])
 def api_gerar_relatorio():
     usuario = request.args.get('usuario')
@@ -69,13 +74,53 @@ def api_gerar_relatorio():
         return jsonify({"erro": "Usuário e período são obrigatórios"}), 400
 
     transacoes = obter_transacoes_por_periodo(usuario, data_de, data_ate)
-    
+
     workbook = openpyxl.Workbook()
     sheet = workbook.active
     sheet.title = f"Relatório de {usuario}"
-    sheet.append(["Data", "Tipo", "Descrição", "Valor"])
-    # ... (lógica de preenchimento do Excel) ...
-    # Salva o arquivo em memória e força o download no navegador
+    
+    # --- Estilos de Cor ---
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="4F4F4F", end_color="4F4F4F", fill_type="solid")
+    green_font = Font(color="008000", bold=True)
+    red_font = Font(color="FF0000", bold=True)
+
+    # Cabeçalho
+    headers = ["Data", "Tipo", "Descrição", "Valor"]
+    sheet.append(headers)
+    for cell in sheet[1]: # Pega a primeira linha
+        cell.font = header_font
+        cell.fill = header_fill
+
+    total_entradas = 0
+    total_saidas = 0
+
+    # Preenche as linhas
+    for t in transacoes:
+        valor = t['valor']
+        data_formatada = datetime.fromisoformat(t['data']).strftime('%d/%m/%Y')
+        tipo = t['tipo'].capitalize()
+        
+        row_data = [data_formatada, tipo, t['descricao'], valor]
+        sheet.append(row_data)
+        
+        # Pega a última linha adicionada para aplicar o estilo
+        last_row = sheet.max_row
+        valor_cell = sheet[f'D{last_row}']
+        
+        if t['tipo'] == 'entrada':
+            total_entradas += valor
+            valor_cell.font = green_font
+        else:
+            total_saidas += valor
+            valor_cell.font = red_font
+
+    # Adiciona resumo no final
+    sheet.append([])
+    sheet.append(["", "", "Total Entradas:", total_entradas])
+    sheet.append(["", "", "Total Saídas:", total_saidas])
+    sheet.append(["", "", "Saldo do Período:", total_entradas - total_saidas])
+
     buffer = io.BytesIO()
     workbook.save(buffer)
     buffer.seek(0)
@@ -84,4 +129,26 @@ def api_gerar_relatorio():
     response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     return response
 
+# ... (resto do arquivo)
 # if __name__ == '__main__': ...
+
+# app.py
+# ... (outras importações) ...
+# Importe a nova função
+from database import obter_gastos_por_categoria
+
+# ... (outras rotas) ...
+
+# --- NOVA ROTA PARA DADOS DO GRÁFICO DE PIZZA ---
+@app.route('/api/relatorio/pizza', methods=['GET'])
+def api_gerar_relatorio_pizza():
+    usuario = request.args.get('usuario')
+    mes = request.args.get('mes') # Espera um formato 'YYYY-MM'
+
+    if not all([usuario, mes]):
+        return jsonify({"erro": "Usuário e mês são obrigatórios"}), 400
+    
+    dados_grafico = obter_gastos_por_categoria(usuario, mes)
+    return jsonify(dados_grafico)
+
+# ... (resto do arquivo) ...
