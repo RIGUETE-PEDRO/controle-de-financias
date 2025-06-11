@@ -2,10 +2,11 @@
 <html lang="pt-br">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Controle Financeiro</title>
     <style>
+        /* Seu CSS aqui (igual ao que enviou) */
         body {
             font-family: system-ui, -apple-system, sans-serif;
             background-color: #121212;
@@ -188,13 +189,13 @@
 
         <form id="form-transacao">
             <div class="input-group">
-                <input type="text" id="descricao" placeholder="Descrição da transação" required>
-                <input type="number" id="valor" step="0.01" placeholder="Valor" required>
+                <input type="text" id="descricao" placeholder="Descrição da transação" required />
+                <input type="number" id="valor" step="0.01" placeholder="Valor" required />
             </div>
             <div class="tipo-transacao">
-                <input type="radio" id="tipo-entrada" name="tipo" value="entrada" checked>
+                <input type="radio" id="tipo-entrada" name="tipo" value="entrada" checked />
                 <label for="tipo-entrada">Entrada</label>
-                <input type="radio" id="tipo-saida" name="tipo" value="saida">
+                <input type="radio" id="tipo-saida" name="tipo" value="saida" />
                 <label for="tipo-saida">Saída</label>
             </div>
             <button type="submit">Adicionar Transação</button>
@@ -205,7 +206,8 @@
     </div>
 
     <script>
-        const API_URL = 'http://127.0.0.1:5000/api/transacoes';
+        const API_URL = '/api/transacoes'; // Usa rota relativa (mesmo domínio)
+
         const formTransacao = document.getElementById('form-transacao');
         const listaTransacoes = document.getElementById('lista-transacoes');
         const saldoEl = document.getElementById('saldo');
@@ -217,13 +219,16 @@
                 listaTransacoes.innerHTML = '';
                 let saldo = 0;
 
-                transacoes.forEach(transacao => {
+                transacoes.forEach((transacao) => {
                     const item = document.createElement('li');
-                    item.classList.add(transacao.tipo); // Adiciona classe 'entrada' ou 'saida'
-                    item.dataset.id = transacao.id; // Adiciona o ID ao elemento para remoção
+                    item.classList.add(transacao.tipo);
+                    item.dataset.id = transacao.id;
 
                     const valorAbsoluto = Math.abs(transacao.valor);
-                    const valorFormatado = valorAbsoluto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    const valorFormatado = valorAbsoluto.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                    });
 
                     if (transacao.tipo === 'entrada') {
                         saldo += transacao.valor;
@@ -241,31 +246,34 @@
                     listaTransacoes.appendChild(item);
                 });
 
-                // Atualiza o saldo total na tela
-                saldoEl.textContent = saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                saldoEl.textContent = saldo.toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                });
                 saldoEl.className = saldo >= 0 ? 'positivo' : 'negativo';
-
             } catch (error) {
                 console.error('Erro ao carregar transações:', error);
-                listaTransacoes.innerHTML = '<li>Falha ao carregar dados. Verifique se a API está rodando.</li>';
+                listaTransacoes.innerHTML =
+                    '<li>Falha ao carregar dados. Verifique se a API está rodando.</li>';
             }
         }
 
-        formTransacao.addEventListener('submit', async function (event) {
+        formTransacao.addEventListener('submit', async (event) => {
             event.preventDefault();
+
             const novaTransacao = {
                 descricao: document.getElementById('descricao').value,
-                valor: document.getElementById('valor').value,
-                tipo: document.querySelector('input[name="tipo"]:checked').value
+                valor: parseFloat(document.getElementById('valor').value),
+                tipo: document.querySelector('input[name="tipo"]:checked').value,
             };
 
             try {
                 await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(novaTransacao)
+                    body: JSON.stringify(novaTransacao),
                 });
-                formTransacao.reset(); // Limpa o formulário
+                formTransacao.reset();
                 carregarTransacoes();
             } catch (error) {
                 console.error('Erro ao adicionar transação:', error);
@@ -273,8 +281,7 @@
             }
         });
 
-        // Evento para remover uma transação (usando delegação de evento)
-        listaTransacoes.addEventListener('click', async function (event) {
+        listaTransacoes.addEventListener('click', async (event) => {
             if (event.target.classList.contains('remover-btn')) {
                 const itemLi = event.target.closest('li');
                 const transacaoId = itemLi.dataset.id;
@@ -282,7 +289,7 @@
                 if (confirm('Tem certeza que deseja remover esta transação?')) {
                     try {
                         await fetch(`${API_URL}/${transacaoId}`, { method: 'DELETE' });
-                        carregarTransacoes(); // Recarrega a lista para refletir a remoção
+                        carregarTransacoes();
                     } catch (error) {
                         console.error('Erro ao remover transação:', error);
                         alert('Não foi possível remover a transação.');
