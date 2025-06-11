@@ -1,305 +1,374 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Controle Financeiro</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Financeiro Completo</title>
     <style>
-        /* Seu CSS aqui (igual ao que enviou) */
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background-color: #121212;
-            color: #e0e0e0;
-            margin: 0;
-            padding: 20px;
-        }
+        body { font-family: system-ui, sans-serif; background-color: #121212; color: #e0e0e0; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; }
+        h1, h2, h3 { text-align: center; color: #bb86fc; }
+        .main-layout { display: flex; flex-wrap: wrap; gap: 30px; }
+        .coluna-principal { flex: 2; min-width: 400px; }
+        .coluna-lateral { flex: 1; min-width: 300px; }
+        .card { background-color: #1e1e1e; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        #seletor-usuario { width:100%; padding: 8px; border-radius: 4px; background-color: #2c2c2c; color: #e0e0e0; border: 1px solid #444; font-size: 1em; }
+        #saldo { font-size: 2em; font-weight: bold; }
+        #saldo.positivo { color: #03dac6; }
+        #saldo.negativo { color: #cf6679; }
+        form { display: flex; flex-direction: column; gap: 15px; }
+        .input-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        input[type=text], input[type=number], input[type=date], select { width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid #333; border-radius: 4px; background-color: #3a3a3a; color: #e0e0e0; font-size: 16px; }
+        .tipo-transacao { display: flex; gap: 10px; justify-content: center; }
+        .tipo-transacao input { display: none; }
+        .tipo-transacao label { padding: 10px 20px; border-radius: 50px; cursor: pointer; transition: all 0.2s; border: 2px solid #444; }
+        input[type="radio"]:checked + label { font-weight: bold; }
+        #tipo-entrada:checked + label { background-color: #03dac6; color: #121212; border-color: #03dac6;}
+        #tipo-saida:checked + label { background-color: #cf6679; color: #121212; border-color: #cf6679;}
+        button { padding: 12px 20px; border: none; border-radius: 4px; background-color: #bb86fc; color: #121212; font-weight: bold; cursor: pointer; transition: background-color 0.2s; font-size: 16px;}
+        button:hover { background-color: #a76aee; }
+        #lista-transacoes, #lista-metas { list-style-type: none; padding: 0; }
+        #lista-transacoes li, #lista-metas li { background-color: #2c2c2c; padding: 15px; border-radius: 4px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .remover-btn { background: none; border: none; color: #888; cursor: pointer; font-size: 20px; } .remover-btn:hover { color: #cf6679; }
+        /* Estilos específicos */
+        #seletor-meta-container { display: none; }
+        .valor { font-weight: bold; font-size: 1.1em; }
+        li.entrada .valor { color: #03dac6; }
+        li.saida .valor { color: #cf6679; }
+        .progresso-meta { width: 100%; background-color: #444; border-radius: 5px; margin-top: 5px; }
+        .barra-progresso { height: 10px; border-radius: 5px; background-color: #bb86fc; transition: width 0.5s ease; }
+        .meta-valores { font-size: 0.8em; color: #aaa; }
+        .excedido .barra-progresso { background-color: #cf6679 !important; }
+        .excedido .meta-valores { color: #cf6679; font-weight: bold; }
 
-        .container {
-            max-width: 700px;
-            margin: auto;
-            background-color: #1e1e1e;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-        }
+        /* ==========================================================================
+   CSS RESPONSIVO PARA CELULARES
+   ========================================================================== */
 
-        h1,
-        h2 {
-            text-align: center;
-            color: #bb86fc;
-        }
+/* Esta regra só será aplicada em telas com largura máxima de 800px */
+@media (max-width: 800px) {
+    
+    /* Faz com que o layout principal mude de lado a lado para um em cima do outro */
+    .main-layout {
+        flex-direction: column;
+    }
 
-        #saldo {
-            text-align: center;
-            font-size: 2em;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
+    /* Ajusta o padding do container principal para não gastar muito espaço nas laterais */
+    .container {
+        padding: 15px;
+    }
 
-        #saldo.positivo {
-            color: #03dac6;
-        }
+    /* Diminui um pouco o tamanho dos títulos e do saldo no celular */
+    h1 {
+        font-size: 1.8em;
+    }
+    #saldo {
+        font-size: 1.8em;
+    }
+    h2 {
+        font-size: 1.5em;
+    }
 
-        #saldo.negativo {
-            color: #cf6679;
-        }
+    /* Faz com que os inputs de Descrição, Valor e Data fiquem um em cima do outro */
+    .input-group {
+        flex-direction: column;
+    }
 
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        input {
-            flex-grow: 1;
-            padding: 12px;
-            border: 1px solid #333;
-            border-radius: 4px;
-            background-color: #2c2c2c;
-            color: #e0e0e0;
-            font-size: 16px;
-        }
-
-        .tipo-transacao {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-
-        .tipo-transacao input {
-            display: none;
-        }
-
-        .tipo-transacao label {
-            padding: 10px 20px;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 2px solid #333;
-        }
-
-        input[type="radio"]:checked+label {
-            font-weight: bold;
-        }
-
-        #tipo-entrada:checked+label {
-            background-color: #03dac6;
-            color: #121212;
-            border-color: #03dac6;
-        }
-
-        #tipo-saida:checked+label {
-            background-color: #cf6679;
-            color: #121212;
-            border-color: #cf6679;
-        }
-
-        button[type="submit"] {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 4px;
-            background-color: #bb86fc;
-            color: #121212;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            font-size: 16px;
-        }
-
-        button[type="submit"]:hover {
-            background-color: #a76aee;
-        }
-
-        #lista-transacoes {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        #lista-transacoes li {
-            background-color: #2c2c2c;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            animation: fadeIn 0.5s ease;
-        }
-
-        #lista-transacoes li.entrada {
-            border-left: 4px solid #03dac6;
-        }
-
-        #lista-transacoes li.saida {
-            border-left: 4px solid #cf6679;
-        }
-
-        .valor {
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-
-        .entrada .valor {
-            color: #03dac6;
-        }
-
-        .saida .valor {
-            color: #cf6679;
-        }
-
-        .remover-btn {
-            background: none;
-            border: none;
-            color: #888;
-            cursor: pointer;
-            font-size: 20px;
-            line-height: 1;
-            margin-left: 15px;
-        }
-
-        .remover-btn:hover {
-            color: #cf6679;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    /* Garante que os inputs ocupem a largura total na nova disposição */
+    .input-group input, .input-group div {
+        width: 100%;
+    }
+}
     </style>
 </head>
-
 <body>
-    <div class="container">
-        <h1>Controle Financeiro</h1>
-        <h2 id="saldo">R$ 0,00</h2>
 
-        <form id="form-transacao">
-            <div class="input-group">
-                <input type="text" id="descricao" placeholder="Descrição da transação" required />
-                <input type="number" id="valor" step="0.01" placeholder="Valor" required />
-            </div>
-            <div class="tipo-transacao">
-                <input type="radio" id="tipo-entrada" name="tipo" value="entrada" checked />
-                <label for="tipo-entrada">Entrada</label>
-                <input type="radio" id="tipo-saida" name="tipo" value="saida" />
-                <label for="tipo-saida">Saída</label>
-            </div>
-            <button type="submit">Adicionar Transação</button>
-        </form>
-
-        <h2>Histórico</h2>
-        <ul id="lista-transacoes"></ul>
+<div class="container">
+    <div class="card seletor-usuario-container">
+        <label for="seletor-usuario"><h3>Visualizando Finanças de:</h3></label>
+        <select id="seletor-usuario">
+            <option value="Pedro">Pedro</option>
+            <option value="Isis">Isis</option>
+        </select>
     </div>
 
-    <script>
-        const API_URL = '/api/transacoes'; // Usa rota relativa (mesmo domínio)
-
-        const formTransacao = document.getElementById('form-transacao');
-        const listaTransacoes = document.getElementById('lista-transacoes');
-        const saldoEl = document.getElementById('saldo');
-
-        async function carregarTransacoes() {
-            try {
-                const response = await fetch(API_URL);
-                const transacoes = await response.json();
-                listaTransacoes.innerHTML = '';
-                let saldo = 0;
-
-                transacoes.forEach((transacao) => {
-                    const item = document.createElement('li');
-                    item.classList.add(transacao.tipo);
-                    item.dataset.id = transacao.id;
-
-                    const valorAbsoluto = Math.abs(transacao.valor);
-                    const valorFormatado = valorAbsoluto.toLocaleString('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                    });
-
-                    if (transacao.tipo === 'entrada') {
-                        saldo += transacao.valor;
-                    } else {
-                        saldo -= transacao.valor;
-                    }
-
-                    item.innerHTML = `
-                        <span>${transacao.descricao}</span>
-                        <div>
-                            <span class="valor">${valorFormatado}</span>
-                            <button class="remover-btn">×</button>
+    <div class="main-layout">
+        <div class="coluna-principal">
+            <div class="card">
+                <h2>Nova Transação</h2>
+                <form id="form-transacao">
+                    <div class="input-group">
+                        <input type="text" id="descricao" placeholder="Descrição" required>
+                        <input type="number" id="valor" step="0.01" placeholder="Valor" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="date" id="data" required>
+                        <div id="seletor-meta-container" style="flex-grow: 1;">
+                            <select id="seletor-meta">
+                                <option value="">Sem Categoria</option>
+                            </select>
                         </div>
-                    `;
-                    listaTransacoes.appendChild(item);
-                });
+                    </div>
+                    <div class="tipo-transacao">
+                        <input type="radio" id="tipo-entrada" name="tipo" value="entrada" checked>
+                        <label for="tipo-entrada">Entrada</label>
+                        <input type="radio" id="tipo-saida" name="tipo" value="saida">
+                        <label for="tipo-saida">Saída</label>
+                    </div>
+                    <button type="submit">Adicionar Transação</button>
+                </form>
+            </div>
+            <div class="card">
+                <h2>Histórico de Transações</h2>
+                <ul id="lista-transacoes"></ul>
+            </div>
+        </div>
 
-                saldoEl.textContent = saldo.toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                });
-                saldoEl.className = saldo >= 0 ? 'positivo' : 'negativo';
-            } catch (error) {
-                console.error('Erro ao carregar transações:', error);
-                listaTransacoes.innerHTML =
-                    '<li>Falha ao carregar dados. Verifique se a API está rodando.</li>';
+        <div class="coluna-lateral">
+            <div class="card">
+                <h2>Saldo Atual</h2>
+                <h2 id="saldo">R$ 0,00</h2>
+            </div>
+            <div class="card">
+                <h2>Metas de Gastos</h2>
+                <ul id="lista-metas"></ul>
+                <form id="form-meta">
+                    <h3>Nova Meta</h3>
+                    <div class="input-group">
+                        <input type="text" id="nome-meta" placeholder="Nome (ex: Lazer)" required>
+                        <input type="number" id="percentual-meta" placeholder="% (ex: 10)" required>
+                    </div>
+                    <button type="submit">Criar Meta</button>
+                </form>
+            </div>
+            <div class="card">
+                <h2>Gerar Relatório</h2>
+                <form id="form-relatorio">
+                    <div class="input-group">
+                        <input type="date" id="data-de" title="Data de início">
+                        <input type="date" id="data-ate" title="Data de fim">
+                    </div>
+                    <button type="button" id="btn-gerar-relatorio">Exportar para Excel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // URLS DA API
+    const API_TRANSACOES_URL = '/api/transacoes';
+    const API_METAS_URL = '/api/metas';
+    const API_RELATORIO_URL = '/api/relatorio';
+
+    // ELEMENTOS DO DOM
+    const seletorUsuario = document.getElementById('seletor-usuario');
+    const saldoEl = document.getElementById('saldo');
+    const listaTransacoes = document.getElementById('lista-transacoes');
+    const listaMetas = document.getElementById('lista-metas');
+    
+    // FORMULÁRIOS
+    const formTransacao = document.getElementById('form-transacao');
+    const formMeta = document.getElementById('form-meta');
+    const formRelatorio = document.getElementById('form-relatorio');
+
+    // ELEMENTOS DINÂMICOS
+    const seletorMetaContainer = document.getElementById('seletor-meta-container');
+    const seletorMeta = document.getElementById('seletor-meta');
+    
+    let usuarioAtual = seletorUsuario.value;
+
+    // --- FUNÇÕES PRINCIPAIS ---
+
+    async function carregarDadosIniciais() {
+        if (!usuarioAtual) return;
+        try {
+            // Busca transações e metas em paralelo para mais performance
+            const [resTransacoes, resMetas] = await Promise.all([
+                fetch(`${API_TRANSACOES_URL}?usuario=${usuarioAtual}`),
+                fetch(`${API_METAS_URL}?usuario=${usuarioAtual}`)
+            ]);
+            const transacoes = await resTransacoes.json();
+            const metas = await resMetas.json();
+
+            renderizarTransacoes(transacoes);
+            renderizarMetas(metas, transacoes);
+            popularSeletorMetas(metas);
+
+        } catch (error) {
+            console.error("Erro ao carregar dados iniciais:", error);
+            alert("Falha ao carregar dados do servidor.");
+        }
+    }
+
+    function renderizarTransacoes(transacoes) {
+        listaTransacoes.innerHTML = '';
+        let saldo = 0;
+        const hoje = new Date();
+        const primeiroDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+
+        const transacoesDoMes = transacoes.filter(t => new Date(t.data) >= primeiroDiaDoMes);
+
+        transacoesDoMes.forEach(t => {
+            const item = document.createElement('li');
+            item.className = t.tipo;
+            item.dataset.id = t.id;
+
+            const valorFormatado = t.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            const dataFormatada = new Date(t.data + 'T00:00:00-03:00').toLocaleDateString('pt-BR');
+
+            item.innerHTML = `
+                <span>${t.descricao} <small>(${dataFormatada})</small></span>
+                <div>
+                    <span class="valor">${t.tipo === 'saida' ? '-' : ''}${valorFormatado}</span>
+                    <button class="remover-btn">×</button>
+                </div>
+            `;
+            listaTransacoes.appendChild(item);
+        });
+
+        transacoes.forEach(t => {
+            saldo += t.tipo === 'entrada' ? t.valor : -t.valor;
+        });
+        
+        saldoEl.textContent = saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        saldoEl.className = saldo >= 0 ? 'positivo' : 'negativo';
+    }
+
+    function renderizarMetas(metas, transacoes) {
+        listaMetas.innerHTML = '';
+
+        const hoje = new Date();
+        const primeiroDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        const transacoesDoMes = transacoes.filter(t => new Date(t.data) >= primeiroDiaDoMes);
+        const totalEntradasMes = transacoesDoMes
+            .filter(t => t.tipo === 'entrada')
+            .reduce((acc, t) => acc + t.valor, 0);
+
+        metas.forEach(meta => {
+            const item = document.createElement('li');
+            item.dataset.id = meta.id;
+
+            const valorOrcado = totalEntradasMes * (meta.percentual / 100);
+            const valorGasto = transacoesDoMes
+                .filter(t => t.meta_id === meta.id)
+                .reduce((acc, t) => acc + t.valor, 0);
+            
+            const percentualGasto = valorOrcado > 0 ? (valorGasto / valorOrcado) * 100 : 0;
+            const excedido = valorGasto > valorOrcado;
+
+            if (excedido) item.classList.add('excedido');
+
+            item.innerHTML = `
+                <div>
+                    <strong>${meta.nome} (${meta.percentual}%)</strong>
+                    <div class="meta-valores">
+                        Gasto: ${valorGasto.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})} de ${valorOrcado.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}
+                    </div>
+                    <div class="progresso-meta">
+                        <div class="barra-progresso" style="width: ${Math.min(percentualGasto, 100)}%;"></div>
+                    </div>
+                </div>
+                <button class="remover-btn">×</button>
+            `;
+            listaMetas.appendChild(item);
+        });
+    }
+
+    function popularSeletorMetas(metas) {
+        seletorMeta.innerHTML = '<option value="">Sem Categoria</option>';
+        metas.forEach(meta => {
+            const option = document.createElement('option');
+            option.value = meta.id;
+            option.textContent = meta.nome;
+            seletorMeta.appendChild(option);
+        });
+    }
+    
+    // --- EVENT LISTENERS ---
+
+    seletorUsuario.addEventListener('change', (event) => {
+        usuarioAtual = event.target.value;
+        carregarDadosIniciais();
+    });
+    
+    document.querySelectorAll('input[name="tipo"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            seletorMetaContainer.style.display = this.value === 'saida' ? 'block' : 'none';
+        });
+    });
+
+    formTransacao.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const tipo = document.querySelector('input[name="tipo"]:checked').value;
+        const novaTransacao = {
+            descricao: document.getElementById('descricao').value,
+            valor: document.getElementById('valor').value,
+            tipo: tipo,
+            data: document.getElementById('data').value,
+            usuario: usuarioAtual,
+            meta_id: tipo === 'saida' ? seletorMeta.value : null
+        };
+        try {
+            await fetch(API_TRANSACOES_URL, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(novaTransacao) });
+            formTransacao.reset();
+            document.getElementById('data').valueAsDate = new Date();
+            seletorMetaContainer.style.display = 'none';
+            carregarDadosIniciais();
+        } catch (error) { console.error('Erro ao adicionar transação:', error); }
+    });
+
+    formMeta.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const novaMeta = {
+            nome: document.getElementById('nome-meta').value,
+            percentual: document.getElementById('percentual-meta').value,
+            usuario: usuarioAtual
+        };
+        try {
+            await fetch(API_METAS_URL, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(novaMeta) });
+            formMeta.reset();
+            carregarDadosIniciais();
+        } catch (error) { console.error('Erro ao criar meta:', error); }
+    });
+    
+    listaTransacoes.addEventListener('click', async (event) => {
+        if (event.target.classList.contains('remover-btn')) {
+            const itemLi = event.target.closest('li');
+            if (confirm('Tem certeza?')) {
+                try {
+                    await fetch(`${API_TRANSACOES_URL}/${itemLi.dataset.id}`, { method: 'DELETE' });
+                    carregarDadosIniciais();
+                } catch (error) { console.error('Erro ao remover transação:', error); }
             }
         }
+    });
 
-        formTransacao.addEventListener('submit', async (event) => {
-            event.preventDefault();
-
-            const novaTransacao = {
-                descricao: document.getElementById('descricao').value,
-                valor: parseFloat(document.getElementById('valor').value),
-                tipo: document.querySelector('input[name="tipo"]:checked').value,
-            };
-
-            try {
-                await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(novaTransacao),
-                });
-                formTransacao.reset();
-                carregarTransacoes();
-            } catch (error) {
-                console.error('Erro ao adicionar transação:', error);
-                alert('Não foi possível adicionar a transação.');
+    listaMetas.addEventListener('click', async (event) => {
+        if (event.target.classList.contains('remover-btn')) {
+            const itemLi = event.target.closest('li');
+            if (confirm('Tem certeza que deseja remover esta meta?')) {
+                try {
+                    await fetch(`${API_METAS_URL}/${itemLi.dataset.id}`, { method: 'DELETE' });
+                    carregarDadosIniciais();
+                } catch (error) { console.error('Erro ao remover meta:', error); }
             }
-        });
+        }
+    });
 
-        listaTransacoes.addEventListener('click', async (event) => {
-            if (event.target.classList.contains('remover-btn')) {
-                const itemLi = event.target.closest('li');
-                const transacaoId = itemLi.dataset.id;
+    document.getElementById('btn-gerar-relatorio').addEventListener('click', function() {
+        const dataDe = document.getElementById('data-de').value;
+        const dataAte = document.getElementById('data-ate').value;
+        if (!dataDe || !dataAte) return alert('Selecione as datas para o relatório.');
+        window.location.href = `${API_RELATORIO_URL}?usuario=${usuarioAtual}&de=${dataDe}&ate=${dataAte}`;
+    });
 
-                if (confirm('Tem certeza que deseja remover esta transação?')) {
-                    try {
-                        await fetch(`${API_URL}/${transacaoId}`, { method: 'DELETE' });
-                        carregarTransacoes();
-                    } catch (error) {
-                        console.error('Erro ao remover transação:', error);
-                        alert('Não foi possível remover a transação.');
-                    }
-                }
-            }
-        });
+    // --- INICIALIZAÇÃO ---
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('data').valueAsDate = new Date();
+        carregarDadosIniciais();
+    });
+</script>
 
-        document.addEventListener('DOMContentLoaded', carregarTransacoes);
-    </script>
 </body>
-
 </html>
