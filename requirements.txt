@@ -1,4 +1,6 @@
-flask
-flask-cors
+Flask
+Flask-CORS
 gunicorn
+requests
 openpyxl
+psycopg2-binary
