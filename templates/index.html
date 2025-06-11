@@ -368,6 +368,17 @@
         document.getElementById('data').valueAsDate = new Date();
         carregarDadosIniciais();
     });
+
+    // Dentro da função renderizarTransacoes:
+const hoje = new Date();
+const primeiroDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+
+// ESTA LINHA filtra para mostrar apenas as transações do mês atual na lista
+const transacoesDoMes = transacoes.filter(t => new Date(t.data) >= primeiroDiaDoMes);
+
+transacoesDoMes.forEach(t => {
+    // Aqui o código cria os itens da lista visual...
+});
 </script>
 
 </body>
